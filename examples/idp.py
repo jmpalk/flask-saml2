@@ -7,6 +7,7 @@ from flask.views import MethodView
 from flask_saml2.idp import IdentityProvider
 from tests.idp.base import CERTIFICATE, PRIVATE_KEY, User
 from tests.sp.base import CERTIFICATE as SP_CERTIFICATE
+from tests.sp.base2 import CERTIFICATE as SP_CERTIFICATE2
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,8 @@ class ExampleIdentityProvider(IdentityProvider):
 users = {user.username: user for user in [
     User('alex', 'alex@example.com'),
     User('jordan', 'jordan@example.com'),
+    User('harry', 'harry@example.com'),
+    User('luke', 'luke@example.com'),
 ]}
 
 
@@ -39,11 +42,18 @@ idp = ExampleIdentityProvider()
 
 class Login(MethodView):
     def get(self):
-        options = ''.join(f'<option value="{user.username}">{user.email}</option>'
-                          for user in users.values())
+        #options = ''.join(f'<option value="{user.username}">{user.email}</option>'
+        #                 for user in users.values())
+        options = ''
+        next_url = request.args.get('next')
+        for user in users.values():
+            print(user.username)
+            if ((user.username == 'luke') and ('sp1' not in session['RelayState'])):
+                continue
+            options = options + f'<option value="{user.username}">{user.email}</option>'
+
         select = f'<div><label>Select a user: <select name="user">{options}</select></label></div>'
 
-        next_url = request.args.get('next')
         next = f'<input type="hidden" name="next" value="{next_url}">'
 
         submit = '<div><input type="submit" value="Login"></div>'
@@ -67,7 +77,8 @@ class Login(MethodView):
 app = Flask(__name__)
 app.debug = True
 app.secret_key = 'not a secret'
-app.config['SERVER_NAME'] = 'localhost:8000'
+app.config['SERVER_NAME'] = '192.168.109.142:8000'
+#app.config['SERVER_NAME'] = 'localhost:8000'
 app.config['SAML2_IDP'] = {
     'autosubmit': True,
     'certificate': CERTIFICATE,
@@ -77,10 +88,21 @@ app.config['SAML2_SERVICE_PROVIDERS'] = [
     {
         'CLASS': 'tests.idp.base.AttributeSPHandler',
         'OPTIONS': {
-            'display_name': 'Example Service Provider',
-            'entity_id': 'http://localhost:9000/saml/metadata.xml',
-            'acs_url': 'http://localhost:9000/saml/acs/',
+            'display_name': 'Example Service Provider2',
+            'entity_id': 'http://192.168.109.142:9001/sp1/saml/metadata.xml',
+            'acs_url': 'http://192.168.109.142:9001/sp1/saml/acs/',
+            #'entity_id': 'http://localhost:9001/saml/metadata.xml',
+            #'acs_url': 'http://localhost:9001/saml/acs/',
             'certificate': SP_CERTIFICATE,
+        },
+    },
+    {
+        'CLASS': 'tests.idp.base.AttributeSPHandler',
+        'OPTIONS': {
+            'display_name': 'Example Service Provider',
+            'entity_id': 'http://192.168.109.142:9000/saml/metadata.xml',
+            'acs_url': 'http://192.168.109.142:9000/saml/acs/',
+            'certificate': SP_CERTIFICATE2,
         },
     }
 ]

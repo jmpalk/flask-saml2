@@ -3,7 +3,7 @@ from flask import Flask, url_for
 
 from flask_saml2.sp import ServiceProvider
 from tests.idp.base import CERTIFICATE as IDP_CERTIFICATE
-from tests.sp.base import CERTIFICATE, PRIVATE_KEY
+from tests.sp.base2 import CERTIFICATE, PRIVATE_KEY
 
 
 class ExampleServiceProvider(ServiceProvider):
@@ -14,15 +14,14 @@ class ExampleServiceProvider(ServiceProvider):
         return url_for('index', _external=True)
 
 
-
 sp = ExampleServiceProvider()
 
 app = Flask(__name__)
 app.debug = True
 app.secret_key = 'not a secret'
 
-app.config['SERVER_NAME'] = '192.168.109.142:9001'
-#app.config['SERVER_NAME'] = 'localhost:9001'
+app.config['SERVER_NAME'] = '192.168.109.142:9000'
+#app.config['SERVER_NAME'] = 'localhost:9000'
 app.config['SAML2_SP'] = {
     'certificate': CERTIFICATE,
     'private_key': PRIVATE_KEY,
@@ -45,15 +44,24 @@ app.config['SAML2_IDENTITY_PROVIDERS'] = [
 ]
 
 
-@app.route('/sp1')
+@app.route('/')
 def index():
+    print("FOOOOOOO! index")
+    print(sp.is_user_logged_in())
     if sp.is_user_logged_in():
         auth_data = sp.get_auth_data_in_session()
+        
 
         message = f'''
         <p>You are logged in as <strong>{auth_data.nameid}</strong>.
         The IdP sent back the following attributes:<p>
         '''
+
+
+        if auth_data.nameid == 'luke@example.com':
+            message = message + f'''
+            <p>May the Force be with you</p>
+            '''
 
         attrs = '<dl>{}</dl>'.format(''.join(
             f'<dt>{attr}</dt><dd>{value}</dd>'
@@ -72,8 +80,8 @@ def index():
         return message + link
 
 
-app.register_blueprint(sp.create_blueprint(), url_prefix='/sp1/saml/')
+app.register_blueprint(sp.create_blueprint(), url_prefix='/saml/')
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=9001)
+    app.run(host='0.0.0.0', port=9000)

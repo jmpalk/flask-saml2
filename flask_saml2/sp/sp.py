@@ -51,6 +51,11 @@ class ServiceProvider:
         self.set_auth_data_in_session(auth_data)
         return redirect(relay_state)
 
+
+
+    def login_unsuccessful(self):
+        session.clear()
+
     # Service provider configuration
 
     def get_sp_config(self) -> dict:
@@ -250,6 +255,9 @@ class ServiceProvider:
     def is_user_logged_in(self) -> bool:
         """Check if the user is currently logged in / authenticated with an IdP.
         """
+        if self.session_auth_data_key in session:
+            print(self.session_auth_data_key in session)
+            print(session[self.session_auth_data_key])
         return self.session_auth_data_key in session and \
             AuthData.is_valid(self, session[self.session_auth_data_key])
 

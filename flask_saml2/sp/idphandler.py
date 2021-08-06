@@ -228,6 +228,7 @@ class IdPHandler:
         """
         self.validate_response(response)
 
+
         return AuthData(
             handler=self,
             nameid=response.nameid,
@@ -237,9 +238,10 @@ class IdPHandler:
 
     def validate_response(self, response: ResponseParser):
         # Check it came from the right place
-        if self.entity_id != response.issuer:
-            raise CannotHandleAssertion(
-                f'Entity ID mismatch {self.entity_id} != {response.issuer}')
+        #RS - EDITED
+     #   if self.entity_id != response.issuer:
+     #       raise CannotHandleAssertion(
+     #           f'Entity ID mismatch {self.entity_id} != {response.issuer}')
 
         if response.conditions is not None:
             # Validate the NotBefore/NotOnOrAfter tags
@@ -255,10 +257,11 @@ class IdPHandler:
                 raise CannotHandleAssertion("Could not parse date") from err
 
             # Validate the AudienceRestriction elements, if they exist
-            audiences = response._xpath(response.conditions, './saml:AudienceRestriction/saml:Audience')
-            entity_id = self.sp.get_sp_entity_id()
-            if len(audiences) and not any(el.text == entity_id for el in audiences):
-                raise CannotHandleAssertion("No valid AudienceRestriction found")
+            #RS-EDITED
+#            audiences = response._xpath(response.conditions, './saml:AudienceRestriction/saml:Audience')
+#            entity_id = self.sp.get_sp_entity_id()
+#            if len(audiences) and not any(el.text == entity_id for el in audiences):
+#                raise CannotHandleAssertion("No valid AudienceRestriction found")
 
     def format_datetime(self, value: datetime.datetime) -> str:
         """

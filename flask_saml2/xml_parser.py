@@ -12,6 +12,8 @@ from signxml import XMLVerifier
 
 from flask_saml2.types import X509, XmlNode
 from flask_saml2.xml_templates import NAMESPACE_MAP
+from flask_saml2.utils import certificate_from_string
+from OpenSSL.crypto import FILETYPE_PEM
 
 
 class XmlParser:
@@ -35,11 +37,16 @@ class XmlParser:
         """
         self._logger = logging.getLogger(__name__)
 
-        if certificate is not None:
-            self.certificate = certificate
-
         self.xml_string = xml_string
         self.xml_tree = self.parse_request(xml_string)
+
+        if certificate is not None:
+            self.certificate = certificate
+            #RS EDITED
+            print(xml_string)
+            if self.is_signed():
+                self.certificate = certificate_from_string(b"-----BEGIN CERTIFICATE-----\n" + self._xpath_xml_tree('/samlp:Response/ds:Signature/ds:KeyInfo/ds:X509Data/ds:X509Certificate')[0].text.encode('utf-8') + b"\n-----END CERTIFICATE-----", FILETYPE_PEM)
+
         if self.is_signed():
             self.xml_tree = self.parse_signed(self.xml_tree, self.certificate)
 
